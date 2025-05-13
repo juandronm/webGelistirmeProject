@@ -4,15 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gazi Mail - Inbox</title>
+
+  <!-- EmailJS kütüphanesi (e-posta gönderimi için) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+  <!-- Bootstrap CSS (tasarım ve grid sistemi için) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome (ikonlar için) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- jQuery (JS işlemleri için) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Bootstrap JS (modal, offcanvas gibi bileşenler için) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <style>
+    /* Sayfa genel stili */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f1f3f4;
+      background-color: #f1f3f4; /* Açık gri arka plan */
     }
+
+    /* Sol menü (sidebar) stili */
+    .sidebar {
+      width: 250px;
+      background-color: #fff;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      min-height: 100vh; /* Tüm ekran yüksekliği kadar uzasın */
+    }
+
+    /* Yeni e-posta yaz butonu */
+    .sidebar .btn-compose {
+      width: 100%;
+    }
+
+    /* Sidebar içindeki ikonlara stil */
+    .sidebar ul li i {
+      margin-right: 8px;
+      color: #003366; /* Koyu mavi */
+    }
+
+    /* E-posta listesi alanı */
+    .email-list {
+      height: 100vh;
+      overflow-y: auto; /* Dikey scroll */
+    }
+
+    /* Tek bir e-posta kutucuğu */
+    .email-item {
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s;
+      word-wrap: break-word; /* Uzun metinleri kır */
+    }
+
+    /* Üzerine gelindiğinde e-posta arka planı */
+    .email-item:hover {
+      background-color: #e9f1fb;
+    }
+
+    /* Sayfanın üst başlığı */
     .email-header {
       background-color: #003366;
       color: #fff;
@@ -20,169 +75,229 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
     }
+
+    /* Logo resmi */
     .email-header img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       margin-right: 10px;
     }
-    .sidebar {
-      background-color: #fff;
-      border-right: 1px solid #ddd;
-      padding: 20px;
-      height: 100%;
-    }
-    .sidebar .btn-compose {
-      width: 100%;
-    }
-    .sidebar ul li i {
-      margin-right: 8px;
-      color: #003366;
-    }
-    .email-item {
-      padding: 15px;
-      border-bottom: 1px solid #e0e0e0;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .email-item:hover {
-      background-color: #e9f1fb;
-    }
+
+    /* E-posta başlığı */
     .email-subject {
       font-weight: bold;
       font-size: 1.5rem;
       margin-bottom: 10px;
       color: #003366;
     }
+
+    /* E-posta meta bilgileri (kimden, kime, tarih) */
     .email-meta {
       font-size: 0.9rem;
       color: #888;
       margin-bottom: 20px;
     }
+
+    /* Seçilen e-postanın tam içeriği */
     .email-full {
       background-color: #ffffff;
       padding: 30px;
       margin: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: none;
+      display: none; /* Başlangıçta gizli */
     }
+
     .email-full p {
       line-height: 1.7;
       font-size: 1rem;
       color: #333;
     }
+
+    /* Yeni mesaj yazma kutusu (compose) */
     .compose-box {
-      display: none;
+      display: none; /* Başlangıçta gizli */
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 100%;
-      max-width: 400px;
+      width: 400px;
       background-color: #fff;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
       border-radius: 10px;
       padding: 15px;
       z-index: 9999;
     }
+
     .compose-box textarea {
       height: 100px;
     }
+
+    /* Link butonları görünümü */
     .btn-link {
       color: #003366;
       text-decoration: none;
       font-weight: bold;
     }
+
     .btn-link:hover {
       text-decoration: underline;
     }
+
+    /* Cevaplama butonları alanı */
     .reply-buttons {
       margin-top: 30px;
     }
+
     .reply-buttons button {
       margin-right: 10px;
     }
-    @media (max-width: 768px) {
-      .sidebar {
-        border-right: none;
-        border-bottom: 1px solid #ddd;
+
+    /* Küçük ekranlarda responsive stil */
+    @media (max-width: 576px) {
+      .compose-box {
+        width: 95%;
+        right: 10px;
+        bottom: 10px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="email-header">
-    <div class="d-flex align-items-center">
-      <img src="imajes/Gazi_Üniversitesi_logo.png" alt="Logo">
-      <h5 class="mb-0">GAZİ ÜNİVERSİTESİ</h5>
-    </div>
-    <span id="user-email"></span>
+<script>
+  const email = sessionStorage.getItem("email");
+  if (!email || email !== "admin@gazi.edu.tr") {
+    window.location.href = "index.html";
+  }
+</script>
+<div class="email-header">
+  
+  <div class="d-flex align-items-center">
+    <button class="btn text-white d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <img src="imajes/Gazi_Üniversitesi_logo.png" alt="Logo">
+    <h5 class="mb-0 d-none d-sm-block">GAZİ ÜNİVERSİTESİ</h5>
   </div>
+  <i class="fas fa-user" role="button" data-bs-toggle="modal" data-bs-target="#userModal"></i>
+</div>
 
-  <div class="container-fluid">
-    <div class="row">
-      <nav class="col-12 col-md-3 sidebar">
-        <button class="btn btn-primary btn-compose mb-3 w-100" onclick="toggleCompose()">
-          <i class="fas fa-pencil-alt me-1"></i> Compose
+<!-- Sidebar for small screens -->
+<div class="offcanvas offcanvas-start" style="width: 220px;" tabindex="-1" id="mobileSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Menu</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <button class="btn btn-primary btn-sm w-100 mb-3 d-sm-none" onclick="toggleCompose()">
+  <i class="fas fa-pencil-alt me-1"></i> Compose
+</button>
+    <ul class="list-unstyled">
+      <li class="mb-2">
+        <button class="btn btn-link p-0" onclick="loadInbox(); setActive(this); closeMobileSidebar()" data-section="inbox">
+          <i class="fas fa-inbox"></i> Inbox
         </button>
-        <ul class="list-unstyled">
-          <li class="mb-2"><i class="fas fa-inbox"></i> <strong onclick="loadInbox(); setActive(this)" data-section="inbox" style="cursor:pointer">Inbox</strong></li>
-          <li class="mb-2"><i class="fas fa-star"></i> <strong onclick="loadStarred(); setActive(this)" data-section="starred" style="cursor:pointer">Starred</strong></li>
-          <li class="mb-2"><i class="fas fa-paper-plane"></i> <strong onclick="loadSent(); setActive(this)" data-section="sent" style="cursor:pointer">Sent</strong></li>
-          <li class="mb-2"><i class="fas fa-trash"></i> <strong onclick="loadTrash(); setActive(this)" data-section="trash" style="cursor:pointer">Trash</strong></li>
-        </ul>
-      </nav>
+      </li>
+      <li class="mb-2">
+        <button class="btn btn-link p-0" onclick="loadStarred(); setActive(this); closeMobileSidebar()" data-section="starred">
+          <i class="fas fa-star"></i> Starred
+        </button>
+      </li>
+      <li class="mb-2">
+        <button class="btn btn-link p-0" onclick="loadSent(); setActive(this); closeMobileSidebar()" data-section="sent">
+          <i class="fas fa-paper-plane"></i> Sent
+        </button>
+      </li>
+      <li class="mb-2">
+        <button class="btn btn-link p-0" onclick="loadTrash(); setActive(this); closeMobileSidebar()" data-section="trash">
+          <i class="fas fa-trash"></i> Trash
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>
 
-      <main class="col-12 col-md-9" id="mainContent">
-        <div class="email-list" id="emailList"></div>
-        <div class="email-full" id="emailDetails">
-          <div class="email-subject" id="email-subject"></div>
-          <div class="email-meta">
-            <span id="email-to"></span> |
-            <span id="email-from"></span> |
-            <span id="email-date"></span>
-          </div>
-          <div class="mt-4" id="email-body"></div>
-          <div class="reply-buttons">
-            <button class="btn btn-outline-primary" onclick="returnToList()">← Back</button>
-            <button class="btn btn-outline-success">↩ Reply</button>
-            <button class="btn btn-outline-secondary">⤴ Forward</button>
-          </div>
+<!-- Main Layout -->
+<div class="container-fluid">
+  <div class="row flex-nowrap">
+    <div class="col-auto sidebar d-none d-md-block">
+      <button class="btn btn-primary btn-compose mb-3 px-3 py-1 text-sm" onclick="toggleCompose()"><i class="fas fa-pencil-alt me-1"></i> Compose</button>
+      <ul class="list-unstyled">
+        <li class="mb-2"><i class="fas fa-inbox"></i>
+          <strong onclick="loadInbox(); setActive(this)" data-section="inbox" style="cursor:pointer">Inbox</strong>
+        </li>
+        <li class="mb-2"><i class="fas fa-star"></i>
+          <strong onclick="loadStarred(); setActive(this)" data-section="starred" style="cursor:pointer">Starred</strong>
+        </li>
+        <li class="mb-2"><i class="fas fa-paper-plane"></i>
+          <strong onclick="loadSent(); setActive(this)" data-section="sent" style="cursor:pointer">Sent</strong>
+        </li>
+        <li class="mb-2"><i class="fas fa-trash"></i>
+          <strong onclick="loadTrash(); setActive(this)" data-section="trash" style="cursor:pointer">Trash</strong>
+        </li>
+      </ul>
+    </div>
+    <div class="col px-0" id="mainContent">
+      <div class="email-list" id="emailList"></div>
+      <div class="email-full" id="emailDetails">
+        <div class="email-subject" id="email-subject"></div>
+        <div class="email-meta">
+          <span id="email-to"></span> |
+          <span id="email-from"></span> |
+          <span id="email-date"></span>
         </div>
-      </main>
+        <div class="mt-4" id="email-body"></div>
+        <div class="reply-buttons d-flex justify-content-center gap-2 flex-row flex-wrap">
+  <button class="btn btn-outline-primary px-2 py-1 btn-sm" onclick="returnToList()">← Back</button>
+  <button class="btn btn-outline-success px-2 py-1 btn-sm">↩ Reply</button>
+  <button class="btn btn-outline-secondary px-2 py-1 btn-sm">⤴ Forward</button>
+</div>
+      </div>
     </div>
   </div>
+</div>
+<div class="compose-box" id="composeBox">
+  <h5>New Message</h5>
+  <form id="composeForm">
+    <div class="mb-2">
+      <input type="email" class="form-control" id="to" placeholder="To" required>
+    </div>
+    <div class="mb-2">
+      <input type="text" class="form-control" id="subject" placeholder="Subject" required>
+    </div>
+    <div class="mb-2">
+      <textarea class="form-control" id="message" placeholder="Message..." required></textarea>
+    </div>
+    <div class="text-end">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCompose()">Close</button>
+      <button type="submit" class="btn btn-success btn-sm">Send</button>
+    </div>
+  </form>
+</div>
+<script>
+  $(document).ready(function () {
+  // إدخال رسائل تجريبية في حال كانت LocalStorage فارغة
+  if (!localStorage.getItem("fakeInbox")) {
+    localStorage.setItem("fakeInbox", JSON.stringify([
+      {
+        from: "gazimail@gazi.edu.tr",
+        subject: "Welcome to Gazi Mail",
+        message: "This is a welcome message in your inbox."
+      }
+    ]));
+  }
 
-  <div class="compose-box" id="composeBox">
-    <h5>New Message</h5>
-    <form id="composeForm">
-      <div class="mb-2">
-        <input type="email" class="form-control" id="to" placeholder="To" required>
-      </div>
-      <div class="mb-2">
-        <input type="text" class="form-control" id="subject" placeholder="Subject" required>
-      </div>
-      <div class="mb-2">
-        <textarea class="form-control" id="message" placeholder="Message..." required></textarea>
-      </div>
-      <div class="text-end">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCompose()">Close</button>
-        <button type="submit" class="btn btn-success btn-sm">Send</button>
-      </div>
-    </form>
-  </div>
-
-  <script>
-    const email = sessionStorage.getItem("email");
-    if (!email || email !== "admin@gazi.edu.tr") {
-      window.location.href = "index.html";
-    }
-  </script>
-  <script>
-     // تحويل كود JavaScript إلى jQuery بالكامل
-$(document).ready(function () {
+  if (!localStorage.getItem("fakeSent")) {
+    localStorage.setItem("fakeSent", JSON.stringify([
+      {
+        to: "student@gazi.edu.tr",
+        subject: "Sample Sent Mail",
+        message: "This is an example of a sent message.",
+        date: new Date().toLocaleString()
+      }
+    ]));
+  }
   $('#user-email').text(sessionStorage.getItem("email"));
 
   window.showEmail = function (subject, to, body, from = 'admin@gazi.edu.tr') {
@@ -217,8 +332,16 @@ $(document).ready(function () {
       : starred.push(id);
     localStorage.setItem("starredEmails", JSON.stringify(starred));
 
-    const section = $(".sidebar strong[data-active]").data("section");
-    section === "sent" ? loadSent() : section === "starred" ? loadStarred() : loadInbox();
+    const section = $('[data-section][data-active]').data("section");
+    if (section === "sent") {
+      loadSent();
+    } else if (section === "starred") {
+      loadStarred();
+    } else if (section === "trash") {
+      loadTrash();
+    } else {
+      loadInbox();
+    }
   };
 
   window.deleteEmail = function (source, index) {
@@ -240,8 +363,16 @@ $(document).ready(function () {
       localStorage.setItem("trashEmails", JSON.stringify(trash));
     }
 
-    const section = $(".sidebar strong[data-active]").data("section");
-    section === "sent" ? loadSent() : loadInbox();
+    const section = $('[data-section][data-active]').data("section");
+    if (section === "sent") {
+      loadSent();
+    } else if (section === "starred") {
+      loadStarred();
+    } else if (section === "trash") {
+      loadTrash();
+    } else {
+      loadInbox();
+    }
   };
 
   function renderEmails(containerId, emails, type) {
@@ -382,6 +513,17 @@ $(document).ready(function () {
 
   emailjs.init("96TkHfP7tED37Ive3");
 
+  function saveToSent(to, subject, message) {
+    let sent = JSON.parse(localStorage.getItem("fakeSent") || "[]");
+    sent.unshift({
+      to: to,
+      subject: subject,
+      message: message,
+      date: new Date().toLocaleString()
+    });
+    localStorage.setItem("fakeSent", JSON.stringify(sent));
+  }
+
   $("#composeForm").on("submit", function (e) {
     e.preventDefault();
     const to = $("#to").val();
@@ -405,13 +547,42 @@ $(document).ready(function () {
   });
 
   window.setActive = function (el) {
-    $(".sidebar strong").removeAttr("data-active");
-    $(el).attr("data-active", "true");
-  };
+  // إزالة التحديد من الكل (يشمل الأزرار والنصوص التي تحمل data-section)
+  $('[data-section]').removeAttr('data-active');
+  // تعيين النشط
+  $(el).attr('data-active', 'true');
+};
 
   loadInbox();
 });
-
-  </script>
+</script>
+<!-- User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalLabel">User Info</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Email:</strong> admin@gazi.edu.tr</p>
+        <p><strong>Role:</strong> Administrator</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function logoutUser() {
+  sessionStorage.clear();
+  window.location.href = 'index.html';
+}
+function closeMobileSidebar() {
+  const sidebar = bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar'));
+  if (sidebar) sidebar.hide();
+}
+</script>
 </body>
 </html>
