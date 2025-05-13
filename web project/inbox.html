@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gazi Mail - Inbox</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f3f4;
+    }
+    .email-header {
+      background-color: #003366;
+      color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .email-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .sidebar {
+      background-color: #fff;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      height: 100%;
+    }
+    .sidebar .btn-compose {
+      width: 100%;
+    }
+    .sidebar ul li i {
+      margin-right: 8px;
+      color: #003366;
+    }
+    .email-item {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .email-item:hover {
+      background-color: #e9f1fb;
+    }
+    .email-subject {
+      font-weight: bold;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #003366;
+    }
+    .email-meta {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .email-full {
+      background-color: #ffffff;
+      padding: 30px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+    .email-full p {
+      line-height: 1.7;
+      font-size: 1rem;
+      color: #333;
+    }
+    .compose-box {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 100%;
+      max-width: 400px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 15px;
+      z-index: 9999;
+    }
+    .compose-box textarea {
+      height: 100px;
+    }
+    .btn-link {
+      color: #003366;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+    .reply-buttons {
+      margin-top: 30px;
+    }
+    .reply-buttons button {
+      margin-right: 10px;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-header">
+    <div class="d-flex align-items-center">
+      <img src="imajes/Gazi_Üniversitesi_logo.png" alt="Logo">
+      <h5 class="mb-0">GAZİ ÜNİVERSİTESİ</h5>
+    </div>
+    <span id="user-email"></span>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <nav class="col-12 col-md-3 sidebar">
+        <button class="btn btn-primary btn-compose mb-3 w-100" onclick="toggleCompose()">
+          <i class="fas fa-pencil-alt me-1"></i> Compose
+        </button>
+        <ul class="list-unstyled">
+          <li class="mb-2"><i class="fas fa-inbox"></i> <strong onclick="loadInbox(); setActive(this)" data-section="inbox" style="cursor:pointer">Inbox</strong></li>
+          <li class="mb-2"><i class="fas fa-star"></i> <strong onclick="loadStarred(); setActive(this)" data-section="starred" style="cursor:pointer">Starred</strong></li>
+          <li class="mb-2"><i class="fas fa-paper-plane"></i> <strong onclick="loadSent(); setActive(this)" data-section="sent" style="cursor:pointer">Sent</strong></li>
+          <li class="mb-2"><i class="fas fa-trash"></i> <strong onclick="loadTrash(); setActive(this)" data-section="trash" style="cursor:pointer">Trash</strong></li>
+        </ul>
+      </nav>
+
+      <main class="col-12 col-md-9" id="mainContent">
+        <div class="email-list" id="emailList"></div>
+        <div class="email-full" id="emailDetails">
+          <div class="email-subject" id="email-subject"></div>
+          <div class="email-meta">
+            <span id="email-to"></span> |
+            <span id="email-from"></span> |
+            <span id="email-date"></span>
+          </div>
+          <div class="mt-4" id="email-body"></div>
+          <div class="reply-buttons">
+            <button class="btn btn-outline-primary" onclick="returnToList()">← Back</button>
+            <button class="btn btn-outline-success">↩ Reply</button>
+            <button class="btn btn-outline-secondary">⤴ Forward</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="compose-box" id="composeBox">
+    <h5>New Message</h5>
+    <form id="composeForm">
+      <div class="mb-2">
+        <input type="email" class="form-control" id="to" placeholder="To" required>
+      </div>
+      <div class="mb-2">
+        <input type="text" class="form-control" id="subject" placeholder="Subject" required>
+      </div>
+      <div class="mb-2">
+        <textarea class="form-control" id="message" placeholder="Message..." required></textarea>
+      </div>
+      <div class="text-end">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCompose()">Close</button>
+        <button type="submit" class="btn btn-success btn-sm">Send</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const email = sessionStorage.getItem("email");
+    if (!email || email !== "admin@gazi.edu.tr") {
+      window.location.href = "index.html";
+    }
+  </script>
+  <script>
+     // تحويل كود JavaScript إلى jQuery بالكامل
+$(document).ready(function () {
+  $('#user-email').text(sessionStorage.getItem("email"));
+
+  window.showEmail = function (subject, to, body, from = 'admin@gazi.edu.tr') {
+    $('#email-subject').text(subject);
+    $('#email-to').text("To: " + to);
+    $('#email-from').text("From: " + from);
+    $('#email-date').text("Date: " + new Date().toLocaleString());
+    $('#email-body').html('<p>' + body.replace(/\n/g, '<br>') + '</p>');
+    $('#emailList').hide();
+    $('#emailDetails').show();
+  };
+
+  window.returnToList = function () {
+    $('#emailDetails').hide();
+    $('#emailList').show();
+  };
+
+  window.toggleCompose = function () {
+    $('#composeBox').toggle();
+  };
+
+  window.isStarred = function (id) {
+    const starred = JSON.parse(localStorage.getItem("starredEmails") || "[]");
+    return starred.includes(id);
+  };
+
+  window.toggleStar = function (id, event) {
+    event.stopPropagation();
+    let starred = JSON.parse(localStorage.getItem("starredEmails") || "[]");
+    starred.includes(id)
+      ? starred.splice(starred.indexOf(id), 1)
+      : starred.push(id);
+    localStorage.setItem("starredEmails", JSON.stringify(starred));
+
+    const section = $(".sidebar strong[data-active]").data("section");
+    section === "sent" ? loadSent() : section === "starred" ? loadStarred() : loadInbox();
+  };
+
+  window.deleteEmail = function (source, index) {
+    let inbox = JSON.parse(localStorage.getItem("fakeInbox") || "[]");
+    let sent = JSON.parse(localStorage.getItem("fakeSent") || "[]");
+    let trash = JSON.parse(localStorage.getItem("trashEmails") || "[]");
+    let removed;
+
+    if (source === "inbox") {
+      removed = inbox.splice(index, 1)[0];
+      localStorage.setItem("fakeInbox", JSON.stringify(inbox));
+    } else if (source === "sent") {
+      removed = sent.splice(index, 1)[0];
+      localStorage.setItem("fakeSent", JSON.stringify(sent));
+    }
+
+    if (removed) {
+      trash.unshift({ ...removed, source });
+      localStorage.setItem("trashEmails", JSON.stringify(trash));
+    }
+
+    const section = $(".sidebar strong[data-active]").data("section");
+    section === "sent" ? loadSent() : loadInbox();
+  };
+
+  function renderEmails(containerId, emails, type) {
+    const $list = $(containerId);
+    $list.empty();
+
+    emails.forEach((mail, index) => {
+      const id = `${type}-${index}`;
+      const star = isStarred(id) ? "★" : "☆";
+      const item = `
+        <div class="email-item">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div onclick="showEmail('${mail.subject}', '${type === 'sent' ? mail.to : 'admin@gazi.edu.tr'}', \`${mail.message}\`, '${type === 'inbox' ? mail.from : 'admin@gazi.edu.tr'}')">
+              <strong>${type === 'sent' ? 'To: ' + mail.to : 'From: ' + mail.from}</strong><br>
+              <strong>${mail.subject}</strong><br>
+              <small>${mail.message.substring(0, 60)}...</small>
+            </div>
+            <div>
+              <span style="cursor:pointer; margin-right:10px;" onclick="toggleStar('${id}', event)">${star}</span>
+              <span style="cursor:pointer; color:red;" onclick="deleteEmail('${type}', ${index})"><i class="fas fa-trash-alt"></i></span>
+            </div>
+          </div>
+        </div>`;
+      $list.append(item);
+    });
+  }
+
+  window.loadInbox = function () {
+    returnToList();
+    const inbox = JSON.parse(localStorage.getItem("fakeInbox") || "[]");
+    renderEmails("#emailList", inbox, "inbox");
+  };
+
+  window.loadSent = function () {
+    returnToList();
+    const sent = JSON.parse(localStorage.getItem("fakeSent") || "[]");
+    renderEmails("#emailList", sent, "sent");
+  };
+
+  window.loadStarred = function () {
+    returnToList();
+    const inbox = JSON.parse(localStorage.getItem("fakeInbox") || "[]");
+    const sent = JSON.parse(localStorage.getItem("fakeSent") || "[]");
+    const starred = JSON.parse(localStorage.getItem("starredEmails") || "[]");
+    const $list = $("#emailList");
+    $list.empty();
+
+    starred.forEach(id => {
+      let mail, index, source;
+      if (id.startsWith("inbox-")) {
+        index = parseInt(id.split("-")[1]);
+        mail = inbox[index];
+        source = "inbox";
+      } else if (id.startsWith("sent-")) {
+        index = parseInt(id.split("-")[1]);
+        mail = sent[index];
+        source = "sent";
+      }
+
+      if (mail) {
+        const to = source === "sent" ? mail.to : "admin@gazi.edu.tr";
+        const from = source === "inbox" ? mail.from : "admin@gazi.edu.tr";
+        const star = isStarred(id) ? "★" : "☆";
+        const item = `
+          <div class="email-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div onclick="showEmail('${mail.subject}', '${to}', \`${mail.message}\`, '${from}')">
+                <strong>${source === "inbox" ? "From: " + mail.from : "To: " + mail.to}</strong><br>
+                <strong>${mail.subject}</strong><br>
+                <small>${mail.message.substring(0, 60)}...</small>
+              </div>
+              <span style="cursor:pointer;" onclick="toggleStar('${id}', event)">${star}</span>
+            </div>
+          </div>`;
+        $list.append(item);
+      }
+    });
+  };
+
+  window.loadTrash = function () {
+    returnToList();
+    const trash = JSON.parse(localStorage.getItem("trashEmails") || "[]");
+    const $list = $("#emailList");
+    $list.empty();
+
+    trash.forEach((mail, index) => {
+      const from = mail.source === "inbox" ? mail.from : "admin@gazi.edu.tr";
+      const to = mail.source === "sent" ? mail.to : "admin@gazi.edu.tr";
+      const item = `
+        <div class="email-item">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div onclick="showEmail('${mail.subject}', '${to}', \`${mail.message}\`, '${from}')">
+              <strong>${mail.source === "inbox" ? "From: " + mail.from : "To: " + mail.to}</strong><br>
+              <strong>${mail.subject}</strong><br>
+              <small>${mail.message.substring(0, 60)}...</small>
+            </div>
+            <div>
+              <span style="cursor:pointer; color:green; margin-right:10px;" title="Restore" onclick="restoreEmail(${index})">
+                <i class="fas fa-undo-alt"></i>
+              </span>
+              <span style="cursor:pointer; color:red;" title="Delete Permanently" onclick="permanentlyDeleteEmail(${index})">
+                <i class="fas fa-times-circle"></i>
+              </span>
+            </div>
+          </div>
+        </div>`;
+      $list.append(item);
+    });
+  };
+
+  window.restoreEmail = function(index) {
+  let trash = JSON.parse(localStorage.getItem("trashEmails") || "[]");
+  const mail = trash.splice(index, 1)[0];
+
+  if (mail) {
+    if (mail.source === "inbox") {
+      let inbox = JSON.parse(localStorage.getItem("fakeInbox") || "[]");
+      inbox.unshift(mail);
+      localStorage.setItem("fakeInbox", JSON.stringify(inbox));
+    } else if (mail.source === "sent") {
+      let sent = JSON.parse(localStorage.getItem("fakeSent") || "[]");
+      sent.unshift(mail);
+      localStorage.setItem("fakeSent", JSON.stringify(sent));
+    }
+
+    localStorage.setItem("trashEmails", JSON.stringify(trash));
+    loadTrash(); // إعادة تحميل واجهة trash
+  }
+};
+
+
+  window.permanentlyDeleteEmail = function (index) {
+    let trash = JSON.parse(localStorage.getItem("trashEmails") || "[]");
+    trash.splice(index, 1);
+    localStorage.setItem("trashEmails", JSON.stringify(trash));
+    loadTrash();
+  };
+
+  emailjs.init("96TkHfP7tED37Ive3");
+
+  $("#composeForm").on("submit", function (e) {
+    e.preventDefault();
+    const to = $("#to").val();
+    const subject = $("#subject").val();
+    const message = $("#message").val();
+
+    emailjs.send("service_mrr64ye", "template_40gwsub", {
+      to_email: to,
+      subject,
+      message
+    })
+    .then(function (response) {
+      alert("Email sent successfully!");
+      saveToSent(to, subject, message);
+      toggleCompose();
+      $("#composeForm")[0].reset();
+      loadSent();
+    }, function (error) {
+      alert("Failed to send email.\n" + JSON.stringify(error));
+    });
+  });
+
+  window.setActive = function (el) {
+    $(".sidebar strong").removeAttr("data-active");
+    $(el).attr("data-active", "true");
+  };
+
+  loadInbox();
+});
+
+  </script>
+</body>
+</html>

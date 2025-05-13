@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome</title>
+  <style>
+    body {
+      background-color: #003366;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .typing-container {
+      display: inline-block;
+      border-right: 2px solid white;
+      white-space: nowrap;
+      overflow: hidden;
+      font-size: 2rem;
+      animation: typing 3s steps(22, end) forwards;
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 22ch }  /* 22 حرف بالضبط: "Welcome to Gazi Mail" */
+
+    }
+
+    .logo {
+      width: 100px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 1s ease-in-out;
+      margin-top: 30px;
+    }
+
+    .logo.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="typing-container" id="welcomeText">Welcome to Gazi Mail</div>
+  <img src="imajes/Gazi_Üniversitesi_logo.png" class="logo" id="logo" alt="Logo"/>
+
+  <script>
+    // Show logo after typing effect
+    setTimeout(() => {
+      document.getElementById("logo").classList.add("show");
+    }, 3200);
+
+    // Redirect to inbox after 6 seconds
+    setTimeout(() => {
+      window.location.href = "inbox.html";
+    }, 6000);
+  </script>
+
+</body>
+</html>
