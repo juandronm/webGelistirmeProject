@@ -24,12 +24,12 @@
       white-space: nowrap;
       overflow: hidden;
       font-size: 2rem;
-      animation: typing 3s steps(22, end) forwards;
     }
+    
 
     @keyframes typing {
       from { width: 0 }
-      to { width: 22ch }  /* 22 حرف بالضبط: "Welcome to Gazi Mail" */
+      to { width: 37% } 
 
     }
 
@@ -53,15 +53,34 @@
   <img src="imajes/Gazi_Üniversitesi_logo.png" class="logo" id="logo" alt="Logo"/>
 
   <script>
+    // Step 1: Get DOM elements
+    const welcomeText = document.getElementById("welcomeText");
+
+    // Choose the message based on language (assuming language is stored)
+    const lang = sessionStorage.getItem("language") || "tr";  // fallback to English
+    
+    // Update welcome text
+    if (lang === "tr") {
+      welcomeText.textContent = "Gazi E-Posta Sistemine Hoşgeldiniz";
+    } else {
+      welcomeText.textContent = "Welcome to Gazi E-Mail System";
+    }
+
+    const charCount = welcomeText.textContent.length;
+    const duration = Math.max(1.5, charCount * 0.1); // e.g. 0.1s per character, min 1.5s
+    
+    // Set the animation dynamically
+    welcomeText.style.animation = `typing ${duration}s steps(${charCount}, end) forwards`;
+
     // Show logo after typing effect
     setTimeout(() => {
       document.getElementById("logo").classList.add("show");
-    }, 3200);
+    }, duration*1000);
 
     // Redirect to inbox after 6 seconds
     setTimeout(() => {
       window.location.href = "inbox.html";
-    }, 6000);
+    }, (duration+1)*1000);
   </script>
 
 </body>
