@@ -6,7 +6,7 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
 
   if (username === "admin@gazi.edu.tr" && password === "1234") {
     sessionStorage.setItem("email", username);
-    window.location.href = "welcome.html"; // ✅ يجب أن تكون هذه الصفحة موجودة
+    window.location.href = "welcome.html"; 
   } else {
     alert("Invalid credentials ❌");
   }
@@ -26,4 +26,15 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
       document.body.classList.remove('dark-mode');
     }
   });
+
+  const languageSelect = document.getElementById('languageSelect');
+  // Save selected language to sessionStorage
+  languageSelect.addEventListener('change', () => {
+    const selectedLang = languageSelect.value;
+    sessionStorage.setItem("language", selectedLang);
+  });
+
+
+
+
 
